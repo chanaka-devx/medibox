@@ -18,57 +18,75 @@ class DeviceDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(device.nickname),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.schedule),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ScheduleScreen(device: device),
-                ),
-              );
-            },
-            tooltip: 'Edit Schedule',
+    return Consumer<DeviceProvider>(
+      builder: (context, deviceProvider, child) {
+        // Get the updated device from the provider
+        final updatedDevice = deviceProvider.getDeviceById(device.id) ?? device;
+        
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(updatedDevice.nickname),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  _showEditNicknameDialog(context, updatedDevice);
+                },
+                tooltip: 'Edit Nickname',
+              ),
+              IconButton(
+                icon: const Icon(Icons.schedule),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ScheduleScreen(device: updatedDevice),
+                    ),
+                  );
+                },
+                tooltip: 'Edit Schedule',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Status card
-            _buildStatusCard(context),
-            const SizedBox(height: 16),
-            
-            // Schedule card
-            _buildScheduleCard(context),
-            const SizedBox(height: 16),
-            
-            // Alerts card
-            if (device.hasActiveAlerts()) ...[
-              _buildAlertsCard(context),
-              const SizedBox(height: 16),
-            ],
-            
-            // Last dispensed card
-            if (device.status.lastDispensed != null) ...[
-              _buildLastDispensedCard(context),
-              const SizedBox(height: 16),
-            ],
-            
-            // Control buttons
-            _buildControlButtons(context),
-          ],
-        ),
-      ),
+          body: RefreshIndicator(
+            onRefresh: () => _handleRefresh(context),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Status card
+                  _buildStatusCard(context, updatedDevice),
+                  const SizedBox(height: 16),
+                  
+                  // Schedule card
+                  _buildScheduleCard(context, updatedDevice),
+                  const SizedBox(height: 16),
+                  
+                  // Alerts card
+                  if (updatedDevice.hasActiveAlerts()) ...[
+                    _buildAlertsCard(context, updatedDevice),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Last dispensed card
+                  if (updatedDevice.status.lastDispensed != null) ...[
+                    _buildLastDispensedCard(context, updatedDevice),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Control buttons
+                  _buildControlButtons(context, updatedDevice),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildStatusCard(BuildContext context) {
+  Widget _buildStatusCard(BuildContext context, Device device) {
     final isOnline = device.status.online;
     
     return Card(
@@ -120,7 +138,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScheduleCard(BuildContext context) {
+  Widget _buildScheduleCard(BuildContext context, Device device) {
     final nextTime = device.getNextScheduledTime();
     
     return Card(
@@ -186,7 +204,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAlertsCard(BuildContext context) {
+  Widget _buildAlertsCard(BuildContext context, Device device) {
     final alerts = device.alerts!;
     
     return Card(
@@ -220,7 +238,7 @@ class DeviceDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
-                _handleClearAlerts(context);
+                _handleClearAlerts(context, device);
               },
               icon: const Icon(Icons.check),
               label: const Text('Clear Alerts'),
@@ -235,7 +253,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLastDispensedCard(BuildContext context) {
+  Widget _buildLastDispensedCard(BuildContext context, Device device) {
     final lastDispensed = device.status.lastDispensed!;
     DateTime? dateTime;
     
@@ -282,7 +300,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildControlButtons(BuildContext context) {
+  Widget _buildControlButtons(BuildContext context, Device device) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -306,26 +324,44 @@ class DeviceDetailsScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _handleManualDispense(context, 'morning'),
-                    icon: const Icon(Icons.wb_sunny, size: 20),
-                    label: const Text('Morning'),
+                  child: ElevatedButton(
+                    onPressed: () => _handleManualDispense(context, device, 'morning'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.wb_sunny, size: 24),
+                        SizedBox(height: 4),
+                        Text('Morning', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _handleManualDispense(context, 'afternoon'),
-                    icon: const Icon(Icons.wb_twilight, size: 20),
-                    label: const Text('Afternoon'),
+                  child: ElevatedButton(
+                    onPressed: () => _handleManualDispense(context, device, 'afternoon'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.wb_twilight, size: 24),
+                        SizedBox(height: 4),
+                        Text('Afternoon', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _handleManualDispense(context, 'night'),
-                    icon: const Icon(Icons.nights_stay, size: 20),
-                    label: const Text('Night'),
+                  child: ElevatedButton(
+                    onPressed: () => _handleManualDispense(context, device, 'night'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.nights_stay, size: 24),
+                        SizedBox(height: 4),
+                        Text('Night', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -334,7 +370,7 @@ class DeviceDetailsScreen extends StatelessWidget {
             
             // Silence alarm button
             OutlinedButton.icon(
-              onPressed: () => _handleSilenceAlarm(context),
+              onPressed: () => _handleSilenceAlarm(context, device),
               icon: const Icon(Icons.volume_off),
               label: const Text('Silence Alarm'),
             ),
@@ -362,7 +398,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _handleManualDispense(BuildContext context, String compartment) async {
+  Future<void> _handleManualDispense(BuildContext context, Device device, String compartment) async {
     final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
     
     final confirmed = await showDialog<bool>(
@@ -404,7 +440,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleSilenceAlarm(BuildContext context) async {
+  Future<void> _handleSilenceAlarm(BuildContext context, Device device) async {
     final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
     
     final success = await deviceProvider.silenceAlarm(device.id);
@@ -421,7 +457,7 @@ class DeviceDetailsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleClearAlerts(BuildContext context) async {
+  Future<void> _handleClearAlerts(BuildContext context, Device device) async {
     final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
     
     final success = await deviceProvider.clearAlerts(device.id);
@@ -436,5 +472,71 @@ class DeviceDetailsScreen extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Future<void> _showEditNicknameDialog(BuildContext context, Device device) async {
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    final nicknameController = TextEditingController(text: device.nickname);
+
+    final newNickname = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Nickname'),
+        content: TextField(
+          controller: nicknameController,
+          decoration: const InputDecoration(
+            labelText: 'Device Nickname',
+            hintText: 'Enter a nickname for your device',
+            border: OutlineInputBorder(),
+          ),
+          maxLength: 50,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final nickname = nicknameController.text.trim();
+              if (nickname.isNotEmpty) {
+                Navigator.of(context).pop(nickname);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newNickname != null && newNickname.isNotEmpty && newNickname != device.nickname) {
+      final success = await deviceProvider.updateDeviceNickname(
+        deviceId: device.id,
+        nickname: newNickname,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Nickname updated successfully'
+                  : 'Failed to update nickname',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    }
+
+    nicknameController.dispose();
+  }
+
+  Future<void> _handleRefresh(BuildContext context) async {
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    
+    await deviceProvider.refreshDevice(device.id);
+     
   }
 }

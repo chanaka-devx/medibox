@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../providers/auth_provider.dart';
 import '../providers/device_provider.dart';
 import '../widgets/device_card.dart';
 import 'add_device_screen.dart';
 import 'device_details_screen.dart';
 import 'login_screen.dart';
+import 'profile_screen.dart';
 
 /// Home screen showing all pillbox devices
 ///
@@ -19,11 +21,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
+  String? _profileImageUrl;
 
   @override
   void initState() {
     super.initState();
     _loadDevices();
+    _loadProfileImage();
   }
 
   Future<void> _loadDevices() async {
@@ -41,12 +45,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadProfileImage() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.userId != null) {
+      try {
+        final database = FirebaseDatabase.instance.ref();
+        final snapshot = await database.child('users/${authProvider.userId}/profileImageUrl').get();
+        if (snapshot.exists && mounted) {
+          setState(() {
+            _profileImageUrl = snapshot.value as String?;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading profile image: $e');
+      }
+    }
+  }
+
   Future<void> _handleRefresh() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
     
     if (authProvider.userId != null) {
       await deviceProvider.refreshAllDevices(authProvider.userId!);
+      await _loadProfileImage();
     }
   }
 
@@ -74,11 +96,26 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'logout') {
+              if (value == 'profile') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              } else if (value == 'logout') {
                 _handleLogout();
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(width: 8),
+                    Text('Profile'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
               const PopupMenuItem(
                 value: 'logout',
                 child: Row(
@@ -132,14 +169,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: Theme.of(context).primaryColor,
-                      child: Text(
-                        authProvider.userName?.substring(0, 1).toUpperCase() ?? 'G',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      backgroundImage: _profileImageUrl != null
+                          ? NetworkImage(_profileImageUrl!)
+                          : null,
+                      child: _profileImageUrl == null
+                          ? Text(
+                              authProvider.userName?.substring(0, 1).toUpperCase() ?? 'G',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
