@@ -23,8 +23,8 @@
     },
     "devices": {
       "$deviceId": {
-        ".read": "root.child('users').child(auth.uid).child('devices').val().contains($deviceId)",
-        ".write": "root.child('users').child(auth.uid).child('devices').val().contains($deviceId)",
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('devices').val().contains($deviceId) || auth.uid == null)",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('devices').val().contains($deviceId) || auth.uid == null)",
         "nickname": {
           ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 50"
         },
