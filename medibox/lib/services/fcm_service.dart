@@ -1,5 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'local_notification_service.dart';
+import 'database_service.dart';
 
 /// Firebase Cloud Messaging service for push notifications
 ///
@@ -7,12 +9,18 @@ import 'package:flutter/foundation.dart';
 /// Supports foreground and background notifications
 class FCMService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final LocalNotificationService _localNotifications = LocalNotificationService();
+  final DatabaseService _database = DatabaseService();
 
   /// Initialize FCM and request permissions
   ///
   /// Should be called once during app startup
-  Future<void> initialize() async {
+  /// Cloud Functions will handle sending notifications using FCM V1 API
+  Future<void> initialize({String? userId}) async {
     try {
+      // Initialize local notifications
+      await _localNotifications.initialize();
+      
       // Request notification permissions (iOS)
       final settings = await _messaging.requestPermission(
         alert: true,
@@ -34,6 +42,12 @@ class FCMService {
         print('FCM Token: $token');
       }
 
+      // Save token to user profile and all devices
+      if (userId != null && token != null) {
+        await _database.saveUserFcmToken(userId: userId, fcmToken: token);
+        await _database.updateFcmTokenForAllDevices(userId: userId, fcmToken: token);
+      }
+
       // Set up message handlers
       _setupMessageHandlers();
 
@@ -42,7 +56,11 @@ class FCMService {
         if (kDebugMode) {
           print('FCM Token refreshed: $newToken');
         }
-        // TODO: Send new token to your backend if needed
+        // Save refreshed token
+        if (userId != null) {
+          _database.saveUserFcmToken(userId: userId, fcmToken: newToken);
+          _database.updateFcmTokenForAllDevices(userId: userId, fcmToken: newToken);
+        }
       });
     } catch (e) {
       if (kDebugMode) {
@@ -145,19 +163,16 @@ class FCMService {
 
   /// Handle incoming message (foreground)
   void _handleMessage(RemoteMessage message) {
-    // This will be called by the notification handler in main app
-    // You can display local notifications here using flutter_local_notifications
-    
     final notification = message.notification;
     final data = message.data;
 
-    if (notification != null) {
-      // Show local notification (requires flutter_local_notifications package)
-      // For now, just log
-      if (kDebugMode) {
-        print('Notification: ${notification.title} - ${notification.body}');
-      }
+    if (kDebugMode) {
+      print('Notification: ${notification?.title} - ${notification?.body}');
+      print('Data: $data');
     }
+
+    // Show local notification with WhatsApp-style display
+    _localNotifications.showNotificationFromFCM(message);
 
     if (data.isNotEmpty) {
       // Handle notification data

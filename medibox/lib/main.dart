@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/device_provider.dart';
 import 'services/fcm_service.dart';
+import 'services/sms_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -143,15 +144,25 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   final FCMService _fcmService = FCMService();
+  final SmsService _smsService = SmsService();
+  bool _fcmInitialized = false;
+  bool _smsInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeFCM();
   }
 
-  Future<void> _initializeFCM() async {
-    await _fcmService.initialize();
+  Future<void> _initializeFCM(String userId) async {
+    if (_fcmInitialized) return;
+    await _fcmService.initialize(userId: userId);
+    _fcmInitialized = true;
+  }
+
+  Future<void> _initializeSMS(String userId) async {
+    if (_smsInitialized) return;
+    await _smsService.initialize(userId);
+    _smsInitialized = true;
   }
 
   @override
@@ -161,6 +172,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
         // Show login if not authenticated
         if (!authProvider.isAuthenticated) {
           return const LoginScreen();
+        }
+        
+        // Initialize FCM and SMS when user is authenticated
+        if (authProvider.user != null) {
+          if (!_fcmInitialized) {
+            _initializeFCM(authProvider.user!.uid);
+          }
+          if (!_smsInitialized) {
+            _initializeSMS(authProvider.user!.uid);
+          }
         }
         
         // Show home if authenticated

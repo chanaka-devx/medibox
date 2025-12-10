@@ -8,6 +8,7 @@ import 'alert.dart';
 class Device {
   final String id; // Unique device identifier
   final String nickname; // User-friendly device name
+  final String? guardianFcmToken; // FCM token for push notifications
   final Schedule schedule;
   final PillboxStatus status;
   final Alert? alerts;
@@ -16,6 +17,7 @@ class Device {
   Device({
     required this.id,
     required this.nickname,
+    this.guardianFcmToken,
     required this.schedule,
     required this.status,
     this.alerts,
@@ -39,6 +41,7 @@ class Device {
     return Device(
       id: id,
       nickname: json['nickname'] as String? ?? 'Pillbox',
+      guardianFcmToken: json['guardianFcmToken'] as String?,
       schedule: json['schedule'] != null
           ? Schedule.fromJson(json['schedule'] as Map<dynamic, dynamic>)
           : Schedule(morning: '08:00', afternoon: '13:00', night: '20:00'),
@@ -58,6 +61,7 @@ class Device {
   Map<String, dynamic> toJson() {
     return {
       'nickname': nickname,
+      if (guardianFcmToken != null) 'guardianFcmToken': guardianFcmToken,
       'schedule': schedule.toJson(),
       'status': status.toJson(),
       if (alerts != null) 'alerts': alerts!.toJson(),
@@ -69,6 +73,7 @@ class Device {
   Device copyWith({
     String? id,
     String? nickname,
+    String? guardianFcmToken,
     Schedule? schedule,
     PillboxStatus? status,
     Alert? alerts,
@@ -77,6 +82,7 @@ class Device {
     return Device(
       id: id ?? this.id,
       nickname: nickname ?? this.nickname,
+      guardianFcmToken: guardianFcmToken ?? this.guardianFcmToken,
       schedule: schedule ?? this.schedule,
       status: status ?? this.status,
       alerts: alerts ?? this.alerts,

@@ -279,6 +279,27 @@ void updateLastDispensed(String compartment) {
   Firebase.RTDB.setString(&fbdo, path.c_str(), timestamp.c_str());
   
   Serial.println("Last dispensed updated: " + timestamp);
+  
+  // Trigger notification for guardian
+  sendPillTakenNotification(compartment);
+}
+
+void sendPillTakenNotification(String compartment) {
+  String path = String("/devices/") + DEVICE_ID + "/notifications/pillTaken";
+  
+  FirebaseJson json;
+  json.set("triggered", true);
+  json.set("compartment", compartment);
+  json.set("timestamp", getCurrentTimestamp());
+  json.set("type", "pill_taken");
+  
+  Firebase.RTDB.set(&fbdo, path.c_str(), &json);
+  
+  Serial.println("Pill taken notification triggered for: " + compartment);
+  
+  // Auto-clear after 5 seconds
+  delay(5000);
+  Firebase.RTDB.deleteNode(&fbdo, path.c_str());
 }
 
 void sendMissedDoseAlert(String compartment) {
@@ -293,6 +314,23 @@ void sendMissedDoseAlert(String compartment) {
   Firebase.RTDB.updateNode(&fbdo, path.c_str(), &json);
   
   Serial.println("Missed dose alert sent for: " + compartment);
+  
+  // Trigger notification for guardian
+  sendMissedDoseNotification(compartment);
+}
+
+void sendMissedDoseNotification(String compartment) {
+  String path = String("/devices/") + DEVICE_ID + "/notifications/missedDose";
+  
+  FirebaseJson json;
+  json.set("triggered", true);
+  json.set("compartment", compartment);
+  json.set("timestamp", getCurrentTimestamp());
+  json.set("type", "missed_dose");
+  
+  Firebase.RTDB.set(&fbdo, path.c_str(), &json);
+  
+  Serial.println("Missed dose notification triggered for: " + compartment);
 }
 
 void clearAlerts() {

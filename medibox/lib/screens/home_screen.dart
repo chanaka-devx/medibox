@@ -3,11 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../providers/auth_provider.dart';
 import '../providers/device_provider.dart';
+import '../services/database_service.dart';
 import '../widgets/device_card.dart';
 import 'add_device_screen.dart';
 import 'device_details_screen.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import 'wifi_provisioning_screen.dart';
 
 /// Home screen showing all pillbox devices
 ///
@@ -22,12 +25,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _profileImageUrl;
+  int _unreadCount = 0;
+  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
     super.initState();
     _loadDevices();
     _loadProfileImage();
+    _loadUnreadCount();
   }
 
   Future<void> _loadDevices() async {
@@ -62,6 +68,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadUnreadCount() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.userId != null) {
+      final count = await _databaseService.getUnreadNotificationCount(authProvider.userId!);
+      if (mounted) {
+        setState(() {
+          _unreadCount = count;
+        });
+      }
+    }
+  }
+
   Future<void> _handleRefresh() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
@@ -69,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (authProvider.userId != null) {
       await deviceProvider.refreshAllDevices(authProvider.userId!);
       await _loadProfileImage();
+      await _loadUnreadCount();
     }
   }
 
@@ -89,16 +108,54 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('MediBox'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _handleRefresh,
-            tooltip: 'Refresh',
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                  _loadUnreadCount();
+                },
+                tooltip: 'Notifications',
+              ),
+              if (_unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      _unreadCount > 9 ? '9+' : _unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'profile') {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              } else if (value == 'setup_wifi') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WiFiProvisioningScreen()),
                 );
               } else if (value == 'logout') {
                 _handleLogout();
@@ -112,6 +169,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.person),
                     SizedBox(width: 8),
                     Text('Profile'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'setup_wifi',
+                child: Row(
+                  children: [
+                    Icon(Icons.bluetooth),
+                    SizedBox(width: 8),
+                    Text('Setup Device WiFi'),
                   ],
                 ),
               ),

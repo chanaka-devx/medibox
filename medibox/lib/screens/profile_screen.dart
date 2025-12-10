@@ -67,8 +67,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         
         if (snapshot.exists) {
           final data = Map<String, dynamic>.from(snapshot.value as Map);
-          _phoneController.text = data['phoneNumber'] ?? '';
-          _currentPhoneNumber = data['phoneNumber'];
+          
+          // Get phone number from notifications path
+          final notificationsSnapshot = await database.child('users/$_userId/notifications/phoneNumber').get();
+          if (notificationsSnapshot.exists) {
+            _phoneController.text = notificationsSnapshot.value as String;
+            _currentPhoneNumber = notificationsSnapshot.value as String;
+          }
+          
           _profileImageUrl = data['profileImageUrl'];
           
           if (data['createdAt'] != null) {
@@ -110,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Update phone number in Realtime Database
       if (_userId != null && _phoneController.text.trim() != _currentPhoneNumber) {
         final database = FirebaseDatabase.instance.ref();
-        await database.child('users/$_userId/phoneNumber').set(_phoneController.text.trim());
+        await database.child('users/$_userId/notifications/phoneNumber').set(_phoneController.text.trim());
         _currentPhoneNumber = _phoneController.text.trim();
       }
 
@@ -317,22 +323,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               enabled: _isEditing,
                               keyboardType: TextInputType.phone,
                               decoration: InputDecoration(
-                                labelText: 'Phone Number',
+                                labelText: 'Guardian Phone Number',
                                 prefixIcon: const Icon(Icons.phone_outlined),
                                 border: _isEditing
                                     ? const OutlineInputBorder()
                                     : InputBorder.none,
                                 filled: !_isEditing,
                                 fillColor: !_isEditing ? Colors.grey[100] : null,
-                                helperText: 'Used for SMS alerts',
+                                helperText: 'Used for SMS medication alerts (e.g., 94784562377)',
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter your phone number';
+                                  return 'Please enter guardian phone number';
                                 }
                                 final cleanNumber = value.replaceAll(RegExp(r'[\s-]'), '');
-                                if (!RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleanNumber)) {
-                                  return 'Please enter a valid phone number';
+                                if (!RegExp(r'^[0-9]{10,15}$').hasMatch(cleanNumber)) {
+                                  return 'Please enter a valid phone number (10-15 digits)';
                                 }
                                 return null;
                               },
