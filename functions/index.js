@@ -293,7 +293,7 @@ async function getGuardianPhone(deviceId) {
       // Check if user has devices list
       if (userData.devices && userData.devices.includes(deviceId)) {
         // Found the user who owns this device
-        const phoneNumber = userData.notifications?.phoneNumber;
+        const phoneNumber = userData.phoneNumber;
         if (phoneNumber) {
           console.log(`Found guardian phone for device ${deviceId}: ${phoneNumber}`);
           return phoneNumber;

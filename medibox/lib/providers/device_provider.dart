@@ -159,7 +159,7 @@ class DeviceProvider with ChangeNotifier {
             
             final formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
             
-            final title = '💊 Pill Taken - ${device.nickname}';
+            final title = 'Pill Taken - ${device.nickname}';
             final message = 'Pills taken from medicine compartment at $formattedTime';
 
             // Show local notification
@@ -224,7 +224,7 @@ class DeviceProvider with ChangeNotifier {
             
             final formattedTime = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
             
-            final title = '⚠️ MISSED DOSE - ${device.nickname}';
+            final title = 'MISSED DOSE - ${device.nickname}';
             final message = 'No response to $compartment alarm at $formattedTime. Please check immediately!';
 
             // Show critical notification

@@ -67,14 +67,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         
         if (snapshot.exists) {
           final data = Map<String, dynamic>.from(snapshot.value as Map);
-          
-          // Get phone number from notifications path
-          final notificationsSnapshot = await database.child('users/$_userId/notifications/phoneNumber').get();
-          if (notificationsSnapshot.exists) {
-            _phoneController.text = notificationsSnapshot.value as String;
-            _currentPhoneNumber = notificationsSnapshot.value as String;
-          }
-          
+          _phoneController.text = data['phoneNumber'] ?? '';
+          _currentPhoneNumber = data['phoneNumber'];
           _profileImageUrl = data['profileImageUrl'];
           
           if (data['createdAt'] != null) {
@@ -116,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Update phone number in Realtime Database
       if (_userId != null && _phoneController.text.trim() != _currentPhoneNumber) {
         final database = FirebaseDatabase.instance.ref();
-        await database.child('users/$_userId/notifications/phoneNumber').set(_phoneController.text.trim());
+        await database.child('users/$_userId/phoneNumber').set(_phoneController.text.trim());
         _currentPhoneNumber = _phoneController.text.trim();
       }
 
@@ -209,19 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   backgroundColor: Theme.of(context).primaryColor,
                                   backgroundImage: _profileImageUrl != null
                                       ? NetworkImage(_profileImageUrl!)
-                                      : null,
-                                  child: _profileImageUrl == null
-                                      ? Text(
-                                          _nameController.text.isNotEmpty
-                                              ? _nameController.text.substring(0, 1).toUpperCase()
-                                              : 'U',
-                                          style: const TextStyle(
-                                            fontSize: 48,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      : null,
+                                      : const AssetImage('assets/images/man.jpg') as ImageProvider,
                                 ),
                           Positioned(
                             bottom: 0,
@@ -323,14 +305,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               enabled: _isEditing,
                               keyboardType: TextInputType.phone,
                               decoration: InputDecoration(
-                                labelText: 'Guardian Phone Number',
+                                labelText: 'Phone Number',
                                 prefixIcon: const Icon(Icons.phone_outlined),
                                 border: _isEditing
                                     ? const OutlineInputBorder()
                                     : InputBorder.none,
                                 filled: !_isEditing,
                                 fillColor: !_isEditing ? Colors.grey[100] : null,
-                                helperText: 'Used for SMS medication alerts (e.g., 94784562377)',
+                                helperText: 'Used for SMS medication alerts',
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {

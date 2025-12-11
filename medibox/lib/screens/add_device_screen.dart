@@ -116,7 +116,7 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
                         Text(
                           '• Device ID is printed on the pillbox label\n'
                           '• It\'s usually a 8-12 character code\n'
-                          '• Example: MB001234 or PILLBOX123',
+                          '• Example: MEDIBOX001',
                           style: TextStyle(color: Colors.blue.shade700),
                         ),
                       ],

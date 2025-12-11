@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   // Subtitle
                   Text(
-                    'Guardian App',
+                    'Welcome Back! Please sign in to continue.',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.grey[600],
                     ),

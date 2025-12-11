@@ -100,7 +100,7 @@ class LocalNotificationService {
     );
 
     final title = '💊 Pill Taken - $deviceNickname';
-    final body = 'Pills have been taken from the $compartment compartment';
+    final body = 'Pills have been taken from the $compartment';
     final payload = '{"deviceId": "$deviceId", "type": "pill_taken", "compartment": "$compartment"}';
 
     await _notifications.show(

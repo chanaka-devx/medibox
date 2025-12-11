@@ -103,7 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: 'Name',
                       hintText: 'Enter your name',
                       prefixIcon: Icon(Icons.person_outlined),
                       border: OutlineInputBorder(),

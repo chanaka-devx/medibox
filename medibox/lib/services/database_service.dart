@@ -488,11 +488,18 @@ class DatabaseService {
       final List<dynamic> notifications = [];
 
       notificationsMap.forEach((key, value) {
-        final notification = Map<String, dynamic>.from({
-          'id': key,
-          ...Map<String, dynamic>.from(value as Map),
-        });
-        notifications.add(notification);
+        // Skip non-notification fields like phoneNumber
+        if (value is! Map) {
+          return;
+        }
+        
+        final notification = Map<String, dynamic>.from(value);
+        
+        // Only process if it has notification fields
+        if (notification.containsKey('timestamp') || notification.containsKey('title')) {
+          notification['id'] = key;
+          notifications.add(notification);
+        }
       });
 
       // Sort by timestamp, newest first
@@ -530,6 +537,33 @@ class DatabaseService {
       });
     } catch (e) {
       throw Exception('Failed to mark notification as read: $e');
+    }
+  }
+
+  /// Mark all notifications as read
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    try {
+      final snapshot = await _usersRef.child(userId).child('notifications').get();
+      
+      if (!snapshot.exists || snapshot.value == null) {
+        return;
+      }
+
+      final notificationsMap = snapshot.value as Map<dynamic, dynamic>;
+      final Map<String, dynamic> updates = {};
+
+      notificationsMap.forEach((key, value) {
+        // Skip non-notification fields
+        if (value is Map && (value['timestamp'] != null || value['title'] != null)) {
+          updates['$key/isRead'] = true;
+        }
+      });
+
+      if (updates.isNotEmpty) {
+        await _usersRef.child(userId).child('notifications').update(updates);
+      }
+    } catch (e) {
+      throw Exception('Failed to mark all notifications as read: $e');
     }
   }
 

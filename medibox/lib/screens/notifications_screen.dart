@@ -30,16 +30,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (authProvider.userId != null) {
       setState(() => _isLoading = true);
       
-      final notificationsData = await _databaseService.getUserNotifications(authProvider.userId!);
-      final notifications = notificationsData.map((data) {
-        return NotificationItem.fromJson(data['id'] as String, data);
-      }).toList();
-      
-      if (mounted) {
-        setState(() {
-          _notifications = notifications;
-          _isLoading = false;
-        });
+      try {
+        final notificationsData = await _databaseService.getUserNotifications(authProvider.userId!);
+        final notifications = notificationsData.map((data) {
+          return NotificationItem.fromJson(data['id'] as String, data);
+        }).toList();
+        
+        if (mounted) {
+          setState(() {
+            _notifications = notifications;
+            _isLoading = false;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading notifications: $e');
+        if (mounted) {
+          setState(() {
+            _notifications = [];
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -51,6 +61,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         userId: authProvider.userId!,
         notificationId: notificationId,
       );
+      await _loadNotifications();
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.userId != null) {
+      await _databaseService.markAllNotificationsAsRead(authProvider.userId!);
       await _loadNotifications();
     }
   }
@@ -90,10 +108,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: const Text('Notifications'),
         actions: [
           if (_notifications.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear_all),
-              onPressed: _clearAll,
-              tooltip: 'Clear All',
+            PopupMenuButton<String>(
+              color: Colors.white,
+              onSelected: (value) {
+                if (value == 'mark_all_read') {
+                  _markAllAsRead();
+                } else if (value == 'clear_all') {
+                  _clearAll();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'mark_all_read',
+                  child: Row(
+                    children: [
+                      Icon(Icons.done_all, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Mark All as Read'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'clear_all',
+                  child: Row(
+                    children: [
+                      Icon(Icons.clear_all, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Clear All'),
+                    ],
+                  ),
+                ),
+              ],
             ),
         ],
       ),

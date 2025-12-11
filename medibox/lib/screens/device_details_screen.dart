@@ -124,8 +124,6 @@ class DeviceDetailsScreen extends StatelessWidget {
               'Nickname',
               device.nickname,
             ),
-            const SizedBox(height: 12),
-            _buildBatteryIndicator(context, device.status.batteryLevel ?? 0),
           ],
         ),
       ),
@@ -389,97 +387,6 @@ class DeviceDetailsScreen extends StatelessWidget {
           child: Text(value),
         ),
       ],
-    );
-  }
-
-  Widget _buildBatteryIndicator(BuildContext context, int batteryLevel) {
-    Color batteryColor;
-    IconData batteryIcon;
-    String displayText;
-
-    if (batteryLevel == 0) {
-      // Unknown battery level
-      batteryColor = Colors.grey;
-      batteryIcon = Icons.battery_unknown;
-      displayText = 'Unknown';
-    } else if (batteryLevel > 50) {
-      batteryColor = Colors.green;
-      batteryIcon = Icons.battery_full;
-      displayText = '$batteryLevel%';
-    } else if (batteryLevel > 20) {
-      batteryColor = Colors.orange;
-      batteryIcon = Icons.battery_3_bar;
-      displayText = '$batteryLevel%';
-    } else {
-      batteryColor = Colors.red;
-      batteryIcon = Icons.battery_1_bar;
-      displayText = '$batteryLevel%';
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: batteryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: batteryColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(batteryIcon, color: batteryColor, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Battery Level',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: batteryColor,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                if (batteryLevel > 0) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: batteryLevel / 100,
-                            backgroundColor: Colors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(batteryColor),
-                            minHeight: 8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        displayText,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: batteryColor,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  Text(
-                    displayText,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: batteryColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -70,6 +70,9 @@ class MediBoxApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           
+          // Scaffold background color
+          scaffoldBackgroundColor: Colors.white,
+          
           // App bar theme
           appBarTheme: AppBarTheme(
             centerTitle: true,
@@ -80,7 +83,7 @@ class MediBoxApp extends StatelessWidget {
           
           // Card theme
           cardTheme: CardThemeData(
-            elevation: 2,
+            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -109,7 +112,7 @@ class MediBoxApp extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.teal,
               foregroundColor: Colors.white,
-              elevation: 2,
+              elevation: 0,
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
                 vertical: 12,

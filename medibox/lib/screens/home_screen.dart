@@ -148,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           PopupMenuButton<String>(
+            color: Colors.white,
             onSelected: (value) {
               if (value == 'profile') {
                 Navigator.of(context).push(
@@ -166,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person),
+                    Icon(Icons.person, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Profile'),
                   ],
@@ -176,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 value: 'setup_wifi',
                 child: Row(
                   children: [
-                    Icon(Icons.bluetooth),
+                    Icon(Icons.bluetooth, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Setup Device WiFi'),
                   ],
@@ -187,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout),
+                    Icon(Icons.logout, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Logout'),
                   ],
@@ -238,17 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       backgroundColor: Theme.of(context).primaryColor,
                       backgroundImage: _profileImageUrl != null
                           ? NetworkImage(_profileImageUrl!)
-                          : null,
-                      child: _profileImageUrl == null
-                          ? Text(
-                              authProvider.userName?.substring(0, 1).toUpperCase() ?? 'G',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                          : const AssetImage('assets/images/man.jpg') as ImageProvider,
                     ),
                     const SizedBox(width: 16),
                     Expanded(

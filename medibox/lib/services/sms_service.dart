@@ -161,11 +161,11 @@ class SmsService {
       debugPrint('📞 Looking up phone number for user: $userId');
       
       final snapshot = await _database
-          .ref('users/$userId/notifications/phoneNumber')
+          .ref('users/$userId/phoneNumber')
           .get();
 
       if (!snapshot.exists) {
-        debugPrint('⚠️  Phone number not found at: users/$userId/notifications/phoneNumber');
+        debugPrint('⚠️  Phone number not found at: users/$userId/phoneNumber');
         debugPrint('💡 Please add phone number in Profile screen');
         return null;
       }
