@@ -360,8 +360,8 @@ void loop()
       }
 
       // 2) Wait for button press
-      Serial.println("Waiting 30 seconds for button...");
-      bool pressed = waitForButtonWithin(30000);
+      Serial.println("Waiting 30 minutes for button...");
+      bool pressed = waitForButtonWithin(1800000); 
 
       if(pressed){
         Serial.println("Button pressed → Rotating motor");
